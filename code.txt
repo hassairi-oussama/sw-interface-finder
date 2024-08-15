@@ -1,0 +1,129 @@
+# Import the Paramiko library for SSH communication
+#import paramiko
+import warnings
+from cryptography.utils import CryptographyDeprecationWarning
+with warnings.catch_warnings(action="ignore", category=CryptographyDeprecationWarning):
+    import paramiko
+import time
+import re
+import os
+
+hostipstart=240
+hostipend=244
+
+swip='172.20.60.103'
+
+
+
+################ ssh ping sho arp include 33####################
+def show_arp(swip,hostipstart,hostipend) :
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    try:
+        # Connect to the sw using provided credentials
+        ssh.connect(swip, username=sw_username, password=sw_password, allow_agent=False, look_for_keys=False)
+
+        # Create a shell channel for interaction
+        channel = ssh.invoke_shell()
+
+        # Wait for the prompt after connecting
+        time.sleep(1)
+        output = channel.recv(65535).decode('utf-8')
+        print(output)
+        time.sleep(1)
+
+        i=hostipstart
+
+        while i < hostipend :
+            hostip='172.20.103.'+str(i)
+            f.write(hostip + "          " )
+
+            # ping the host
+            channel.send(f"ping {hostip} repeat 1 \n")
+            time.sleep(1)  # Adjust the sleep time as needed
+            channel.send(f"\n")
+            time.sleep(1)  # Adjust the sleep time as needed
+            
+            # Check if the ping was successful
+            arp_output = channel.recv(65535).decode('utf-8')
+            print(arp_output) 
+
+            # send arp         
+            channel.send(f"sho arp | inc  {hostip} \n")
+            time.sleep(1)  # Adjust the sleep time as needed                
+
+            # Check if the arp was successful
+            arp_output = channel.recv(65535).decode('utf-8')
+            print(arp_output)
+
+            # extract mac address
+            p = '[0-9a-fA-F]{4}'+'.'+'[0-9a-fA-F]{4}'+'.'+'[0-9a-fA-F]{4}'
+            mac1=re.findall(p, arp_output)
+            print(str(mac1[0]))
+
+            if len(mac1)!=0:
+                print(str(mac1[0]))
+        
+                # send show mac address         
+                channel.send(f"sho mac address-table | inc  {mac1[0]} \n")
+                time.sleep(1)  # Adjust the sleep time as needed                
+
+                # Check if the result : interface
+                interface_output = channel.recv(65535).decode('utf-8')
+                print(interface_output)
+ 
+                # extract interface
+                pi = 'Gi'+"."+'/'+'[0-9]'+'/'+".{1,2}"
+                int1=re.findall(pi, interface_output)
+                print(str(int1[0]))
+                interface=str(int1[0])
+
+            else: interface='no-reply'
+                
+            f.write(interface +  "\n")
+        
+
+           
+
+            i=i+1
+        # Close the SSH connection
+        ssh.close()
+
+    except Exception as e:
+        # Handle exceptions and print an error message
+        print(f"Error: {e}")
+        
+
+        ###################################################################################
+
+
+###############################################################################################
+# Entry point of the script
+if __name__ == "__main__":
+    # Replace these values with your sw's information
+    
+    sw_username = "admin"
+    sw_password = "*pass"
+    
+    f = open("sw.txt", "a")
+    
+
+
+    
+
+    
+    
+
+    
+    show_arp(swip,hostipstart,hostipend)
+        
+
+        
+        
+        
+    f.close()
+
+    f = open("sw.txt", "r")
+    print(f.read())
+    print("Path of the file..", os.path.abspath('sw.txt'))
