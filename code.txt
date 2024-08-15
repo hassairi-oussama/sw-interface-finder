@@ -8,10 +8,10 @@ import time
 import re
 import os
 
-hostipstart=240
-hostipend=244
+hostipstart=30
+hostipend=40
 
-swip='172.20.60.103'
+swip='172.30.50.1'
 
 
 
@@ -36,7 +36,7 @@ def show_arp(swip,hostipstart,hostipend) :
         i=hostipstart
 
         while i < hostipend :
-            hostip='172.20.103.'+str(i)
+            hostip='172.30.101.'+str(i)
             f.write(hostip + "          " )
 
             # ping the host
@@ -60,10 +60,11 @@ def show_arp(swip,hostipstart,hostipend) :
             # extract mac address
             p = '[0-9a-fA-F]{4}'+'.'+'[0-9a-fA-F]{4}'+'.'+'[0-9a-fA-F]{4}'
             mac1=re.findall(p, arp_output)
-            print(str(mac1[0]))
+            
 
             if len(mac1)!=0:
                 print(str(mac1[0]))
+                f.write(str(mac1[0]) + "          " )
         
                 # send show mac address         
                 channel.send(f"sho mac address-table | inc  {mac1[0]} \n")
@@ -103,8 +104,8 @@ def show_arp(swip,hostipstart,hostipend) :
 if __name__ == "__main__":
     # Replace these values with your sw's information
     
-    sw_username = "admin"
-    sw_password = "*pass"
+    sw_username = "osama"
+    sw_password = "*985zn;"
     
     f = open("sw.txt", "a")
     
@@ -112,7 +113,7 @@ if __name__ == "__main__":
 
     
 
-    
+    # Call the function to copy running config to TFTP server
     
 
     
